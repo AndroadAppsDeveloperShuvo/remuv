@@ -1,136 +1,419 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <title>Remove Background</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Background Remover Pro - By Shuvo</title>
+  
+  <!-- Toastify -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+
   <style>
+    /* Professional Theme Variables */
+    :root {
+      --bg-color: #e2e8f0;
+      --card-bg: #ffffff;
+      --text-main: #000000;
+      --text-muted: #475569;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border-color: #cbd5e1;
+      --input-bg: #f8fafc;
+      --success: #10b981;
+      --danger: #ef4444;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg-color: #020617;
+      --card-bg: #0f172a;
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --border-color: #334155;
+      --input-bg: #1e293b;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    * {
+      box-sizing: border-box; margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background-color 0.3s, color 0.3s, border-color 0.2s;
+    }
+
     body {
-      background: #f0f4f8;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
+      background: var(--bg-color); color: var(--text-main);
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; padding: 20px;
     }
-    h1 {
-      color: #333;
+
+    .generator-card {
+      background: var(--card-bg); width: 100%; max-width: 460px;
+      padding: 30px; border-radius: 20px; box-shadow: var(--shadow-lg);
+      position: relative;
     }
-    .upload-box {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
+
+    /* Header & Settings */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+    .header h1 { font-size: 22px; font-weight: 800; color: var(--text-main); }
+
+    .settings-btn { background: transparent; border: none; color: var(--text-main); cursor: pointer; padding: 8px; border-radius: 50%; }
+    .settings-btn:hover { background: var(--border-color); }
+    .settings-btn svg { width: 22px; height: 22px; fill: currentColor; }
+
+    .settings-dropdown {
+      position: absolute; top: 70px; right: 30px; background: var(--card-bg);
+      border: 2px solid var(--border-color); box-shadow: var(--shadow-lg);
+      border-radius: 12px; padding: 15px; width: 180px; display: none; z-index: 10;
     }
-    input[type="file"] {
-      margin: 15px 0;
+    .settings-dropdown.active { display: block; animation: popIn 0.2s ease-out; }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700; }
+
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); border-radius: 34px; transition: .4s; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Drag & Drop Zone */
+    .drop-zone {
+      border: 2px dashed var(--primary); border-radius: 16px; padding: 30px 20px;
+      text-align: center; background: var(--input-bg); cursor: pointer;
+      transition: all 0.3s; margin-bottom: 20px;
     }
-    button {
-      padding: 10px 20px;
-      background: #007BFF;
-      border: none;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
+    .drop-zone:hover, .drop-zone.dragover { background: rgba(37, 99, 235, 0.1); border-color: var(--primary-hover); }
+    .drop-zone svg { width: 45px; height: 45px; fill: var(--primary); margin-bottom: 10px; }
+    .drop-zone p { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; }
+    .drop-zone span { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    #fileInput { display: none; }
+
+    /* Initial Preview */
+    .preview-container {
+      display: none; text-align: center; margin-bottom: 15px;
     }
-    button:hover {
-      background: #0056b3;
+    .preview-container img {
+      max-width: 100%; max-height: 200px; border-radius: 10px;
+      border: 2px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      animation: popIn 0.3s ease; object-fit: contain;
     }
-    #output {
-      margin-top: 30px;
-      text-align: center;
+
+    /* Loader */
+    .loader-container {
+      display: none; flex-direction: column; align-items: center; margin: 20px 0;
     }
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid var(--border-color);
+      border-top: 4px solid var(--primary); border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
-    button.download-btn {
+    .loader-text { margin-top: 10px; font-size: 14px; font-weight: 700; color: var(--text-main); }
+
+    /* Buttons */
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px;
+      font-weight: 800; cursor: pointer; transition: 0.2s; color: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px;
+    }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:disabled { background: var(--border-color); color: var(--text-muted); cursor: not-allowed; }
+    .btn-primary { background: var(--primary); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-success { background: var(--success); }
+    .btn-success:hover:not(:disabled) { background: #059669; }
+    .btn-danger { background: transparent; border: 2px solid var(--border-color); color: var(--text-main); }
+    .btn-danger:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Result Section */
+    .result-section {
+      display: none; margin-top: 25px; padding-top: 20px;
+      border-top: 2px dashed var(--border-color); text-align: center; animation: fadeIn 0.4s ease;
+    }
+    .result-title { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
+    
+    /* Checkerboard background for transparent images */
+    .checkerboard-bg {
+      background-image: 
+        linear-gradient(45deg, #ccc 25%, transparent 25%), 
+        linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #ccc 75%), 
+        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: #eee;
+      border-radius: 10px;
+      padding: 10px;
       display: inline-block;
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: #28a745;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
+      border: 2px solid var(--border-color);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 15px;
+      width: 100%;
     }
-    button.download-btn:hover {
-      background: #1e7e34;
+    .checkerboard-bg img {
+      max-width: 100%; max-height: 250px; display: block; margin: 0 auto; object-fit: contain;
     }
+
+    .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-group .btn { margin-top: 0; flex: 1; }
+
+    /* Footer */
+    .footer { margin-top: 25px; text-align: center; font-size: 14px; color: var(--text-muted); font-weight: 600; }
+    .footer span { color: var(--primary); font-weight: 800; }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
-  <div class="upload-box">
-    <h1>Background Remover</h1>
-    <input type="file" id="fileInput" accept="image/*" />
-    <br>
-    <button onclick="removeBg()">Remove Background</button>
+
+  <div class="generator-card">
+    
+    <!-- Header -->
+    <div class="header">
+      <h1>Background Remover</h1>
+      <button class="settings-btn" id="settingsBtn" onclick="toggleSettings()" title="Settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+      </button>
+
+      <div class="settings-dropdown" id="settingsMenu">
+        <div class="setting-item">
+          <span>Dark Mode</span>
+          <label class="switch"><input type="checkbox" id="themeToggle" onchange="toggleTheme()"><span class="slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drag & Drop Zone -->
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+      <p>Drag & Drop Image here</p>
+      <span>or click to browse from device</span>
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <!-- Initial Preview -->
+    <div class="preview-container" id="previewContainer">
+      <img id="originalPreview" src="" alt="Original Image">
+    </div>
+
+    <!-- Loader -->
+    <div class="loader-container" id="loader">
+      <div class="spinner"></div>
+      <div class="loader-text">🪄 Removing Background...</div>
+    </div>
+
+    <!-- Action Button -->
+    <button onclick="removeBg()" class="btn btn-primary" id="generateBtn" disabled>🪄 Remove Background</button>
+
+    <!-- Result Section -->
+    <div class="result-section" id="resultSection">
+      <div class="result-title">Result Image</div>
+      
+      <!-- Checkerboard background makes transparency visible -->
+      <div class="checkerboard-bg">
+        <img id="processedImg" src="" alt="Processed Image">
+      </div>
+
+      <div class="btn-group">
+        <button onclick="downloadImage()" class="btn btn-success">📥 Download PNG</button>
+        <button onclick="resetApp()" class="btn btn-danger">🔄 Reset</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">Developed by <span>Developer Shuvo</span></div>
   </div>
 
-  <div id="output"></div>
-
   <script>
+    // Theme Setup
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      if (savedTheme === 'dark') document.getElementById('themeToggle').checked = true;
+    });
+
+    function toggleSettings() {
+      document.getElementById('settingsMenu').classList.toggle('active');
+    }
+
+    document.addEventListener('click', function(event) {
+      const menu = document.getElementById('settingsMenu');
+      const btn = document.getElementById('settingsBtn');
+      if (!menu.contains(event.target) && !btn.contains(event.target)) {
+        menu.classList.remove('active');
+      }
+    });
+
+    function toggleTheme() {
+      const isDark = document.getElementById('themeToggle').checked;
+      const newTheme = isDark ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+
+    // UI Elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const previewContainer = document.getElementById('previewContainer');
+    const originalPreview = document.getElementById('originalPreview');
+    const loader = document.getElementById('loader');
+    const resultSection = document.getElementById('resultSection');
+    const processedImg = document.getElementById('processedImg');
+
+    let selectedFile = null;
     let processedBlob = null;
 
+    // --- Dynamic File Name Generator ---
+    function getNextFileName() {
+      let count = parseInt(localStorage.getItem('bg_rm_shuvo_counter') || '0');
+      count += 1;
+      localStorage.setItem('bg_rm_shuvo_counter', count);
+      let paddedCount = String(count).padStart(3, '0');
+      return `bg_removed_dev_shuvo_${paddedCount}.png`;
+    }
+
+    // --- Drag & Drop Handling ---
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelection(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleFileSelection(e.target.files[0]);
+      }
+    });
+
+    function handleFileSelection(file) {
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file!', '#ef4444');
+        return;
+      }
+      selectedFile = file;
+      resultSection.style.display = 'none';
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        originalPreview.src = e.target.result;
+        previewContainer.style.display = 'block';
+        generateBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // --- API Logic ---
     async function removeBg() {
-      const input = document.getElementById('fileInput');
-      const file = input.files[0];
-      if (!file) {
-        alert("Please select an image!");
+      if (!selectedFile) {
+        showToast('Please select an image first!', '#ef4444');
         return;
       }
 
+      generateBtn.disabled = true;
+      dropZone.style.display = 'none';
+      previewContainer.style.display = 'none';
+      loader.style.display = 'flex';
+
       const formData = new FormData();
-      formData.append('image_file', file);
+      formData.append('image_file', selectedFile);
       formData.append('size', 'auto');
 
-      const response = await fetch('https://api.remove.bg/v1.0/removebg', {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': 'za7iM6hHkCZJwhdBidi62jJV'
-        },
-        body: formData
-      });
+      try {
+        const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+          method: 'POST',
+          headers: {
+            'X-Api-Key': 'za7iM6hHkCZJwhdBidi62jJV' // User's API Key
+          },
+          body: formData
+        });
 
-      if (response.ok) {
-        processedBlob = await response.blob();
-        const url = URL.createObjectURL(processedBlob);
+        loader.style.display = 'none';
 
-        document.getElementById('output').innerHTML = `
-          <h3>Processed Image:</h3>
-          <img src="${url}" alt="Processed Image">
-          <br>
-          <button class="download-btn" onclick="downloadImage()">Download Image</button>
-        `;
-      } else {
-        const err = await response.text();
-        alert("Error: " + err);
+        if (response.ok) {
+          processedBlob = await response.blob();
+          const url = URL.createObjectURL(processedBlob);
+          
+          processedImg.src = url;
+          resultSection.style.display = 'block';
+          showToast('Background Removed Successfully! 🎉', '#10b981');
+        } else {
+          const err = await response.text();
+          showToast('Error removing background! Check API limit.', '#ef4444');
+          dropZone.style.display = 'block';
+          previewContainer.style.display = 'block';
+          generateBtn.disabled = false;
+          console.error(err);
+        }
+      } catch (error) {
+        loader.style.display = 'none';
+        dropZone.style.display = 'block';
+        previewContainer.style.display = 'block';
+        generateBtn.disabled = false;
+        showToast('Network error occurred!', '#ef4444');
       }
     }
 
+    // --- Download Logic ---
     function downloadImage() {
-      if (!processedBlob) {
-        alert("No processed image found!");
-        return;
-      }
+      if (!processedBlob) return;
 
       const blobUrl = URL.createObjectURL(processedBlob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = blobUrl;
-      a.download = 'no-bg.png';
+      a.download = getNextFileName(); // Dynamic filename
       document.body.appendChild(a);
       a.click();
-      // Important: revoke object URL to free up memory
+      
       setTimeout(() => {
         URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
       }, 100);
+
+      showToast('Download Started!', '#10b981');
+    }
+
+    // --- Reset Logic ---
+    function resetApp() {
+      selectedFile = null;
+      processedBlob = null;
+      fileInput.value = '';
+      originalPreview.src = '';
+      processedImg.src = '';
+      
+      resultSection.style.display = 'none';
+      previewContainer.style.display = 'none';
+      loader.style.display = 'none';
+      dropZone.style.display = 'block';
+      generateBtn.disabled = true;
+      generateBtn.style.display = 'flex';
+      
+      showToast('Reset Completed', '#2563eb');
+    }
+
+    function showToast(message, color) {
+      Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "center",
+        style: {
+          background: color,
+          borderRadius: "8px",
+          fontWeight: "bold"
+        }
+      }).showToast();
     }
   </script>
 </body>
